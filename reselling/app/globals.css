@@ -1,0 +1,139 @@
+/* globals.css */
+
+/* Global Reset */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Root Variables */
+:root {
+  --background: #f9f9f9; /* Lighter background for overall brightness */
+  --foreground: #333; /* Dark text for readability */
+  --primary-color: #4caf50; /* Header background */
+  --secondary-color: #FFFFFF; /* White for backgrounds */
+  --accent-color: #ff5722; /* Active link color */
+  --border-radius: 10px; /* Rounded corners for a modern look */
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle light shadow */
+  --shadow-dark: 0 4px 16px rgba(0, 0, 0, 0.2); /* Strong shadow effect */
+  --font-family-base: 'Inter', sans-serif; /* Clean modern font */
+  --font-family-heading: 'Poppins', sans-serif; /* Elegant heading font */
+  --font-size-base: 16px;
+  --line-height-base: 1.6;
+  --text-color-light: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #2A2A2A;
+    --foreground: #E4E4E4;
+    --primary-color: #4CAF50;
+    --secondary-color: #333;
+    --accent-color: #FF5722;
+  }
+}
+
+/* Body and Basic Layout */
+html, body {
+  height: 100%; /* Ensures full height for body and html */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s, color 0.3s; /* Smooth transition between themes */
+}
+
+body {
+  color: var(--foreground);
+  background-color: var(--background);
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-base);
+  flex: 1;
+}
+
+/* Main content should expand to fill available space */
+main {
+  flex: 1;
+}
+
+/* Header Styling */
+header {
+  background-color: var(--primary-color);
+  padding: 1rem 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-dark);
+  transition: background-color 0.3s;
+}
+
+header .logo {
+  font-family: var(--font-family-heading);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--secondary-color);
+}
+
+header nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+header nav a {
+  color: var(--secondary-color);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+header nav a:hover {
+  background-color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+header nav a.active {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+}
+
+/* Button Hover Effect */
+button {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+button:disabled {
+  background-color: #B0B0B0;
+  cursor: not-allowed;
+}
+
+/* Footer Styling */
+footer {
+  padding: 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  text-align: center;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  box-shadow: var(--shadow-light);
+  z-index: 100;
+}
