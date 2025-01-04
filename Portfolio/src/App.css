@@ -1,0 +1,200 @@
+:root {
+  font-size: 62.5%; /* 1rem = 10px */
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+  transition: scroll 0.8s ease-out;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: inherit; /* Inherit box-sizing */
+}
+
+html, body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Disable horizontal scrolling */
+  width: 100vw;
+  box-sizing: border-box;
+}
+
+/* Ensuring smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base styling for the app */
+.App {
+  text-align: center;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Particles background container */
+#particles {
+  position: absolute;
+  width: 100%;
+  height: 100vh;
+  z-index: -1;
+}
+
+/* Links styling */
+a {
+  text-decoration: none;
+}
+
+/* Layout tweaks for mobile responsiveness */
+* {
+  box-sizing: inherit;
+}
+
+/* Set images, videos, and other large content to be responsive */
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mobile-first approach: styles for smaller screens */
+@media (max-width: 768px) {
+  :root {
+    font-size: 55%; /* Make text smaller for smaller screens */
+  }
+
+  /* Ensure that the App container adjusts its content accordingly */
+  .App {
+    text-align: center;
+    padding: 2rem;
+  }
+
+  #particles {
+    height: 100%;
+  }
+
+  /* Fix for general text and link adjustments */
+  a {
+    font-size: 1.4rem;
+  }
+
+  img, video, iframe {
+    width: 100%;
+  }
+
+  /* Ensure header components and main sections are responsive */
+  .header, .home, .about, .skills, .projects, .experience, .contact {
+    padding: 1rem;
+  }
+}
+
+/* For very small screens (mobile phones) */
+@media (max-width: 480px) {
+  :root {
+    font-size: 50%; /* Further decrease font size */
+  }
+
+  /* Modify layout and spacing to suit small screen sizes */
+  .App {
+    padding: 1rem;
+  }
+
+  .header, .home, .about, .skills, .projects, .experience, .contact {
+    padding: 0.5rem; /* Less padding on small screens */
+  }
+
+  /* Adjust font size and element widths for small screens */
+  h1, h2, h3, p {
+    font-size: 1.2rem;
+  }
+
+  /* Adjust button sizes */
+  button {
+    padding: 0.8rem 1.2rem;
+    font-size: 1.4rem;
+  }
+
+  /* Ensure the content doesn't overflow */
+  img, video, iframe {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* For medium screens (tablets and small laptops) */
+@media (max-width: 1024px) {
+  :root {
+    font-size: 56%; /* A little smaller font size for medium screens */
+  }
+
+  .App {
+    padding: 3rem;
+  }
+
+  /* Adjust text size and layout for tablets */
+  h1, h2, h3, p {
+    font-size: 1.6rem;
+  }
+
+  button {
+    padding: 1rem 1.8rem;
+    font-size: 1.6rem;
+  }
+}
+
+/* Android-specific styles */
+@media only screen and (max-width: 768px) and (orientation: portrait), 
+       only screen and (max-width: 1024px) and (orientation: landscape) {
+  
+  /* Example of changing header font-size for Android portrait/landscape mode */
+  .header {
+    font-size: 1.8rem;
+    padding: 1rem;
+  }
+
+  /* Adjust button size for Android */
+  button {
+    padding: 1rem 2rem;
+    font-size: 1.6rem;
+  }
+
+  /* Customize layout to make the app more mobile-friendly for Android */
+  .App {
+    padding: 2rem;
+  }
+
+  /* Making sure images and videos are mobile-friendly */
+  img, video, iframe {
+    max-width: 90%;
+    height: auto;
+  }
+
+  /* Adjust text size for better readability */
+  h1, h2, h3, p {
+    font-size: 1.4rem;
+  }
+}
+
+/* Android Native Dark Mode */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+  .App {
+    background-color: #333; /* Darker background for Android in dark mode */
+    color: white; /* Lighter text for dark mode */
+  }
+
+  button {
+    background-color: #007bff;
+    color: white;
+  }
+}
+
+/* Android Navigation Bar Fix */
+@media only screen and (max-width: 768px) and (device-width: 360px) {
+  .header {
+    padding-top: 3rem; /* Avoid overlap with status bar */
+    background-color: #fff;
+  }
+
+  footer {
+    margin-bottom: 50px; /* Leave space for the navigation bar */
+  }
+}
