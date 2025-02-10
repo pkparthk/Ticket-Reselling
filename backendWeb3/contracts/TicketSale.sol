@@ -1,173 +1,180 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract TicketSale {
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+contract TicketSale is ReentrancyGuard {
     struct Ticket {
         uint256 id;
-        string name;
+        address payable seller;
+        string eventDetails;
         string location;
         uint256 price;
-        uint256 quantity;
+        uint256 ticketsAvailable;
         bool isNegotiable;
         uint256 minOffer;
-        address seller;
-        bool soldOut;
+        bool isSoldOut;
     }
 
     struct Offer {
-        address buyer;
+        address payable buyer;
         uint256 offerPrice;
+        bool isAccepted;
     }
 
-    uint256 public nextTicketId = 1;
-    mapping(uint256 => Ticket) public tickets; // Ticket ID => Ticket details
-    mapping(uint256 => Offer[]) public ticketOffers; // Ticket ID => Array of offers
-    mapping(address => uint256[]) public userTickets; // User => Ticket IDs owned
+    uint256 public ticketCount;
+    mapping(uint256 => Ticket) public tickets;
+    mapping(address => uint256[]) public userTickets;
+    mapping(uint256 => Offer[]) public ticketOffers;
 
-    event TicketCreated(
-        uint256 id,
-        string name,
-        string location,
-        uint256 price,
-        uint256 quantity,
-        bool isNegotiable,
-        address seller
-    );
-    event TicketBought(uint256 id, address buyer, uint256 amount);
+    event TicketCreated(uint256 id, address seller, string eventDetails, uint256 price, uint256 ticketsAvailable, bool isNegotiable);
     event OfferMade(uint256 ticketId, address buyer, uint256 offerPrice);
     event OfferAccepted(uint256 ticketId, address buyer, uint256 acceptedPrice);
+    event TicketPurchased(uint256 id, address buyer, uint256 price);
 
-    // Create a new ticket
+    // ✅ Create a new ticket
     function createTicket(
-        string memory name,
-        string memory location,
-        uint256 price,
-        uint256 quantity,
-        bool isNegotiable,
-        uint256 minOffer
-    ) 
-    external {
-        require(quantity > 0, "Quantity must be greater than zero");
-        require(price > 0, "Price must be greater than zero");
-        if (isNegotiable) {
-            require(
-                minOffer > 0 && minOffer <= price,
-                "Minimum offer must be valid"
-            );
-        }
+        string memory _eventDetails,
+        string memory _location,
+        uint256 _price,
+        uint256 _ticketsAvailable,
+        bool _isNegotiable,
+        uint256 _minOffer
+    ) public {
+        require(_price > 0, "Price must be greater than zero");
+        require(_ticketsAvailable > 0, "Tickets available must be greater than zero");
 
-        tickets[nextTicketId] = Ticket({
-            id: nextTicketId,
-            name: name,
-            location: location,
-            price: price,
-            quantity: quantity,
-            isNegotiable: isNegotiable,
-            minOffer: minOffer,
-            seller: msg.sender,
-            soldOut: false
+        ticketCount++;
+        tickets[ticketCount] = Ticket({
+            id: ticketCount,
+            seller: payable(msg.sender),
+            eventDetails: _eventDetails,
+            location: _location,
+            price: _price,
+            ticketsAvailable: _ticketsAvailable,
+            isNegotiable: _isNegotiable,
+            minOffer: _isNegotiable ? _minOffer : 0,
+            isSoldOut: false
         });
 
-        emit TicketCreated(
-            nextTicketId,
-            name,
-            location,
-            price,
-            quantity,
-            isNegotiable,
-            msg.sender
-        );
-        nextTicketId++;
+        emit TicketCreated(ticketCount, msg.sender, _eventDetails, _price, _ticketsAvailable, _isNegotiable);
     }
 
-    // Buy a ticket
-    function buyTicket(uint256 ticketId, uint256 quantity) external payable {
-        Ticket storage ticket = tickets[ticketId];
-        require(ticket.id != 0, "Ticket does not exist");
-        require(!ticket.soldOut, "Ticket is sold out");
-        require(ticket.quantity >= quantity, "Not enough tickets available");
-        require(
-            msg.value == ticket.price * quantity,
-            "Incorrect payment amount"
-        );
-
-        // Transfer funds to the seller
-        payable(ticket.seller).transfer(msg.value);
-
-        // Update ticket quantity
-        ticket.quantity -= quantity;
-        if (ticket.quantity == 0) {
-            ticket.soldOut = true;
-        }
-
-        // Record buyer ownership
-        userTickets[msg.sender].push(ticketId);
-
-        emit TicketBought(ticketId, msg.sender, msg.value);
-    }
-
-    // Make an offer for a ticket
-    function makeOffer(uint256 ticketId, uint256 offerPrice) external {
-        Ticket storage ticket = tickets[ticketId];
+    // ✅ Make an offer for a ticket
+    function makeOffer(uint256 _ticketId) public payable {
+        Ticket storage ticket = tickets[_ticketId];
         require(ticket.id != 0, "Ticket does not exist");
         require(ticket.isNegotiable, "Ticket is not negotiable");
-        require(!ticket.soldOut, "Ticket is sold out");
-        require(
-            offerPrice >= ticket.minOffer,
-            "Offer is below minimum offer price"
-        );
+        require(ticket.ticketsAvailable > 0, "Ticket is sold out");
+        require(msg.value >= ticket.minOffer, "Offer price is below the minimum allowed");
 
-        ticketOffers[ticketId].push(
-            Offer({buyer: msg.sender, offerPrice: offerPrice})
-        );
+        ticketOffers[_ticketId].push(Offer({
+            buyer: payable(msg.sender),
+            offerPrice: msg.value,
+            isAccepted: false
+        }));
 
-        emit OfferMade(ticketId, msg.sender, offerPrice);
+        emit OfferMade(_ticketId, msg.sender, msg.value);
     }
 
-    // Accept an offer
-    function acceptOffer(uint256 ticketId, uint256 offerIndex) external {
-        Ticket storage ticket = tickets[ticketId];
-        require(ticket.id != 0, "Ticket does not exist");
-        require(
-            ticket.seller == msg.sender,
-            "Only the seller can accept an offer"
-        );
+    // ✅ Accept an offer
+    function acceptOffer(uint256 _ticketId, uint256 _offerIndex) public nonReentrant {
+        Ticket storage ticket = tickets[_ticketId];
+        require(ticket.seller == msg.sender, "Only the seller can accept offers");
+        require(_offerIndex < ticketOffers[_ticketId].length, "Invalid offer index");
 
-        Offer memory offer = ticketOffers[ticketId][offerIndex];
-        require(offer.buyer != address(0), "Offer does not exist");
+        Offer storage offer = ticketOffers[_ticketId][_offerIndex];
+        require(!offer.isAccepted, "Offer already accepted");
 
-        // Transfer funds from buyer to seller
-        payable(ticket.seller).transfer(offer.offerPrice);
+        // Mark offer as accepted
+        offer.isAccepted = true;
 
-        // Record buyer ownership
-        userTickets[offer.buyer].push(ticketId);
+        // Transfer funds to the seller
+        ticket.seller.transfer(offer.offerPrice);
 
-        // Remove the accepted offer
-        ticketOffers[ticketId][offerIndex] = ticketOffers[ticketId][
-            ticketOffers[ticketId].length - 1
-        ];
-        ticketOffers[ticketId].pop();
+        // Transfer ticket ownership
+        userTickets[offer.buyer].push(ticket.id);
+        ticket.ticketsAvailable--;
 
-        // Reduce ticket quantity
-        ticket.quantity--;
-        if (ticket.quantity == 0) {
-            ticket.soldOut = true;
+        if (ticket.ticketsAvailable == 0) {
+            ticket.isSoldOut = true;
         }
 
-        emit OfferAccepted(ticketId, offer.buyer, offer.offerPrice);
+        emit OfferAccepted(_ticketId, offer.buyer, offer.offerPrice);
     }
 
-    // Get all tickets owned by a user
-    function getUserTickets(
-        address user
-    ) external view returns (uint256[] memory) {
+    // ✅ Buy a ticket instantly (non-negotiable)
+    function buyTicket(uint256 _ticketId) public payable nonReentrant {
+        Ticket storage ticket = tickets[_ticketId];
+        require(ticket.id != 0, "Ticket does not exist");
+        require(ticket.ticketsAvailable > 0, "No tickets available");
+        require(!ticket.isNegotiable, "Ticket is negotiable, use makeOffer");
+        require(msg.value == ticket.price, "Incorrect price");
+        require(msg.sender != ticket.seller, "You cannot buy your own ticket");
+
+        ticket.seller.transfer(msg.value);
+        ticket.ticketsAvailable--;
+
+        if (ticket.ticketsAvailable == 0) {
+            ticket.isSoldOut = true;
+        }
+
+        userTickets[msg.sender].push(ticket.id);
+
+        emit TicketPurchased(_ticketId, msg.sender, ticket.price);
+    }
+
+    // ✅ Retrieve ticket details
+    function getTicketDetails(uint256 _ticketId) public view returns (
+        uint256 id,
+        address seller,
+        string memory eventDetails,
+        string memory location,
+        uint256 price,
+        uint256 ticketsAvailable,
+        bool isNegotiable,
+        uint256 minOffer,
+        bool isSoldOut
+    ) {
+        Ticket storage ticket = tickets[_ticketId];
+        require(ticket.id != 0, "Ticket does not exist");
+
+        return (
+            ticket.id,
+            ticket.seller,
+            ticket.eventDetails,
+            ticket.location,
+            ticket.price,
+            ticket.ticketsAvailable,
+            ticket.isNegotiable,
+            ticket.minOffer,
+            ticket.isSoldOut
+        );
+    }
+
+    // ✅ Retrieve all active tickets
+    function getAllTickets() public view returns (Ticket[] memory) {
+        uint256 availableTicketCount = 0;
+        for (uint256 i = 1; i <= ticketCount; i++) {
+            if (!tickets[i].isSoldOut) {
+                availableTicketCount++;
+            }
+        }
+
+        Ticket[] memory allTickets = new Ticket[](availableTicketCount);
+        uint256 index = 0;
+
+        for (uint256 i = 1; i <= ticketCount; i++) {
+            if (!tickets[i].isSoldOut) {
+                allTickets[index] = tickets[i];
+                index++;
+            }
+        }
+        return allTickets;
+    }
+
+    // ✅ Retrieve user-owned tickets
+    function getUserTickets(address user) public view returns (uint256[] memory) {
         return userTickets[user];
-    }
-
-    // Get all offers for a ticket
-    function getTicketOffers(
-        uint256 ticketId
-    ) external view returns (Offer[] memory) {
-        return ticketOffers[ticketId];
     }
 }
