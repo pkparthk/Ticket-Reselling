@@ -23,25 +23,15 @@ import type {
   TypedContractMethod,
 } from "./common";
 
-export declare namespace TicketSale {
-  export type OfferStruct = { buyer: AddressLike; offerPrice: BigNumberish };
-
-  export type OfferStructOutput = [buyer: string, offerPrice: bigint] & {
-    buyer: string;
-    offerPrice: bigint;
-  };
-}
-
 export interface TicketSaleInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "acceptOffer"
       | "buyTicket"
       | "createTicket"
-      | "getTicketOffers"
-      | "getUserTickets"
-      | "makeOffer"
-      | "nextTicketId"
+      | "getBuyerDetails"
+      | "getTicketDetails"
+      | "ticketBuyers"
+      | "ticketCount"
       | "ticketOffers"
       | "tickets"
       | "userTickets"
@@ -51,36 +41,42 @@ export interface TicketSaleInterface extends Interface {
     nameOrSignatureOrTopic:
       | "OfferAccepted"
       | "OfferMade"
-      | "TicketBought"
       | "TicketCreated"
+      | "TicketPurchased"
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "acceptOffer",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "buyTicket",
-    values: [BigNumberish, BigNumberish]
+    values: [BigNumberish, string, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "createTicket",
-    values: [string, string, BigNumberish, BigNumberish, boolean, BigNumberish]
+    values: [
+      string,
+      string,
+      BigNumberish,
+      BigNumberish,
+      boolean,
+      BigNumberish,
+      string,
+      string,
+      string
+    ]
   ): string;
   encodeFunctionData(
-    functionFragment: "getTicketOffers",
+    functionFragment: "getBuyerDetails",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "getUserTickets",
-    values: [AddressLike]
+    functionFragment: "getTicketDetails",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "makeOffer",
-    values: [BigNumberish, BigNumberish]
+    functionFragment: "ticketBuyers",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "nextTicketId",
+    functionFragment: "ticketCount",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -96,26 +92,25 @@ export interface TicketSaleInterface extends Interface {
     values: [AddressLike, BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "acceptOffer",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "buyTicket", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "createTicket",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getTicketOffers",
+    functionFragment: "getBuyerDetails",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getUserTickets",
+    functionFragment: "getTicketDetails",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "makeOffer", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "nextTicketId",
+    functionFragment: "ticketBuyers",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "ticketCount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -173,17 +168,30 @@ export namespace OfferMadeEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace TicketBoughtEvent {
+export namespace TicketCreatedEvent {
   export type InputTuple = [
     id: BigNumberish,
-    buyer: AddressLike,
-    amount: BigNumberish
+    seller: AddressLike,
+    eventDetails: string,
+    price: BigNumberish,
+    ticketsAvailable: BigNumberish,
+    isNegotiable: boolean
   ];
-  export type OutputTuple = [id: bigint, buyer: string, amount: bigint];
+  export type OutputTuple = [
+    id: bigint,
+    seller: string,
+    eventDetails: string,
+    price: bigint,
+    ticketsAvailable: bigint,
+    isNegotiable: boolean
+  ];
   export interface OutputObject {
     id: bigint;
-    buyer: string;
-    amount: bigint;
+    seller: string;
+    eventDetails: string;
+    price: bigint;
+    ticketsAvailable: bigint;
+    isNegotiable: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -191,33 +199,30 @@ export namespace TicketBoughtEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace TicketCreatedEvent {
+export namespace TicketPurchasedEvent {
   export type InputTuple = [
     id: BigNumberish,
-    name: string,
-    location: string,
+    buyer: AddressLike,
     price: BigNumberish,
-    quantity: BigNumberish,
-    isNegotiable: boolean,
-    seller: AddressLike
+    buyerEmail: string,
+    buyerPhone: string,
+    nftOrImageCID: string
   ];
   export type OutputTuple = [
     id: bigint,
-    name: string,
-    location: string,
+    buyer: string,
     price: bigint,
-    quantity: bigint,
-    isNegotiable: boolean,
-    seller: string
+    buyerEmail: string,
+    buyerPhone: string,
+    nftOrImageCID: string
   ];
   export interface OutputObject {
     id: bigint;
-    name: string;
-    location: string;
+    buyer: string;
     price: bigint;
-    quantity: bigint;
-    isNegotiable: boolean;
-    seller: string;
+    buyerEmail: string;
+    buyerPhone: string;
+    nftOrImageCID: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -268,50 +273,102 @@ export interface TicketSale extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  acceptOffer: TypedContractMethod<
-    [ticketId: BigNumberish, offerIndex: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
   buyTicket: TypedContractMethod<
-    [ticketId: BigNumberish, quantity: BigNumberish],
+    [
+      _ticketId: BigNumberish,
+      _buyerEmail: string,
+      _buyerPhone: string,
+      _nftOrImageCID: string
+    ],
     [void],
     "payable"
   >;
 
   createTicket: TypedContractMethod<
     [
-      name: string,
-      location: string,
-      price: BigNumberish,
-      quantity: BigNumberish,
-      isNegotiable: boolean,
-      minOffer: BigNumberish
+      _eventDetails: string,
+      _location: string,
+      _price: BigNumberish,
+      _ticketsAvailable: BigNumberish,
+      _isNegotiable: boolean,
+      _minOffer: BigNumberish,
+      _sellerEmail: string,
+      _imageCID: string,
+      _eventLink: string
     ],
     [void],
     "nonpayable"
   >;
 
-  getTicketOffers: TypedContractMethod<
-    [ticketId: BigNumberish],
-    [TicketSale.OfferStructOutput[]],
+  getBuyerDetails: TypedContractMethod<
+    [_ticketId: BigNumberish],
+    [
+      [string, string, string] & {
+        buyerEmail: string;
+        buyerPhone: string;
+        nftOrImageCID: string;
+      }
+    ],
     "view"
   >;
 
-  getUserTickets: TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
-
-  makeOffer: TypedContractMethod<
-    [ticketId: BigNumberish, offerPrice: BigNumberish],
-    [void],
-    "nonpayable"
+  getTicketDetails: TypedContractMethod<
+    [_ticketId: BigNumberish],
+    [
+      [
+        bigint,
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        boolean,
+        bigint,
+        boolean,
+        string,
+        string,
+        string
+      ] & {
+        id: bigint;
+        seller: string;
+        eventDetails: string;
+        location: string;
+        price: bigint;
+        ticketsAvailable: bigint;
+        isNegotiable: boolean;
+        minOffer: bigint;
+        isSoldOut: boolean;
+        imageCID: string;
+        eventLink: string;
+        sellerEmail: string;
+      }
+    ],
+    "view"
   >;
 
-  nextTicketId: TypedContractMethod<[], [bigint], "view">;
+  ticketBuyers: TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [string, string, string] & {
+        buyerEmail: string;
+        buyerPhone: string;
+        nftOrImageCID: string;
+      }
+    ],
+    "view"
+  >;
+
+  ticketCount: TypedContractMethod<[], [bigint], "view">;
 
   ticketOffers: TypedContractMethod<
     [arg0: BigNumberish, arg1: BigNumberish],
-    [[string, bigint] & { buyer: string; offerPrice: bigint }],
+    [
+      [string, bigint, boolean] & {
+        buyer: string;
+        offerPrice: bigint;
+        isAccepted: boolean;
+      }
+    ],
     "view"
   >;
 
@@ -322,22 +379,28 @@ export interface TicketSale extends BaseContract {
         bigint,
         string,
         string,
+        string,
         bigint,
         bigint,
         boolean,
         bigint,
+        boolean,
         string,
-        boolean
+        string,
+        string
       ] & {
         id: bigint;
-        name: string;
+        seller: string;
+        eventDetails: string;
         location: string;
         price: bigint;
-        quantity: bigint;
+        ticketsAvailable: bigint;
         isNegotiable: boolean;
         minOffer: bigint;
-        seller: string;
-        soldOut: boolean;
+        isSoldOut: boolean;
+        imageCID: string;
+        eventLink: string;
+        sellerEmail: string;
       }
     ],
     "view"
@@ -354,16 +417,14 @@ export interface TicketSale extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "acceptOffer"
-  ): TypedContractMethod<
-    [ticketId: BigNumberish, offerIndex: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
     nameOrSignature: "buyTicket"
   ): TypedContractMethod<
-    [ticketId: BigNumberish, quantity: BigNumberish],
+    [
+      _ticketId: BigNumberish,
+      _buyerEmail: string,
+      _buyerPhone: string,
+      _nftOrImageCID: string
+    ],
     [void],
     "payable"
   >;
@@ -371,41 +432,94 @@ export interface TicketSale extends BaseContract {
     nameOrSignature: "createTicket"
   ): TypedContractMethod<
     [
-      name: string,
-      location: string,
-      price: BigNumberish,
-      quantity: BigNumberish,
-      isNegotiable: boolean,
-      minOffer: BigNumberish
+      _eventDetails: string,
+      _location: string,
+      _price: BigNumberish,
+      _ticketsAvailable: BigNumberish,
+      _isNegotiable: boolean,
+      _minOffer: BigNumberish,
+      _sellerEmail: string,
+      _imageCID: string,
+      _eventLink: string
     ],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "getTicketOffers"
+    nameOrSignature: "getBuyerDetails"
   ): TypedContractMethod<
-    [ticketId: BigNumberish],
-    [TicketSale.OfferStructOutput[]],
+    [_ticketId: BigNumberish],
+    [
+      [string, string, string] & {
+        buyerEmail: string;
+        buyerPhone: string;
+        nftOrImageCID: string;
+      }
+    ],
     "view"
   >;
   getFunction(
-    nameOrSignature: "getUserTickets"
-  ): TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
-  getFunction(
-    nameOrSignature: "makeOffer"
+    nameOrSignature: "getTicketDetails"
   ): TypedContractMethod<
-    [ticketId: BigNumberish, offerPrice: BigNumberish],
-    [void],
-    "nonpayable"
+    [_ticketId: BigNumberish],
+    [
+      [
+        bigint,
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        boolean,
+        bigint,
+        boolean,
+        string,
+        string,
+        string
+      ] & {
+        id: bigint;
+        seller: string;
+        eventDetails: string;
+        location: string;
+        price: bigint;
+        ticketsAvailable: bigint;
+        isNegotiable: boolean;
+        minOffer: bigint;
+        isSoldOut: boolean;
+        imageCID: string;
+        eventLink: string;
+        sellerEmail: string;
+      }
+    ],
+    "view"
   >;
   getFunction(
-    nameOrSignature: "nextTicketId"
+    nameOrSignature: "ticketBuyers"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [string, string, string] & {
+        buyerEmail: string;
+        buyerPhone: string;
+        nftOrImageCID: string;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "ticketCount"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "ticketOffers"
   ): TypedContractMethod<
     [arg0: BigNumberish, arg1: BigNumberish],
-    [[string, bigint] & { buyer: string; offerPrice: bigint }],
+    [
+      [string, bigint, boolean] & {
+        buyer: string;
+        offerPrice: bigint;
+        isAccepted: boolean;
+      }
+    ],
     "view"
   >;
   getFunction(
@@ -417,22 +531,28 @@ export interface TicketSale extends BaseContract {
         bigint,
         string,
         string,
+        string,
         bigint,
         bigint,
         boolean,
         bigint,
+        boolean,
         string,
-        boolean
+        string,
+        string
       ] & {
         id: bigint;
-        name: string;
+        seller: string;
+        eventDetails: string;
         location: string;
         price: bigint;
-        quantity: bigint;
+        ticketsAvailable: bigint;
         isNegotiable: boolean;
         minOffer: bigint;
-        seller: string;
-        soldOut: boolean;
+        isSoldOut: boolean;
+        imageCID: string;
+        eventLink: string;
+        sellerEmail: string;
       }
     ],
     "view"
@@ -460,18 +580,18 @@ export interface TicketSale extends BaseContract {
     OfferMadeEvent.OutputObject
   >;
   getEvent(
-    key: "TicketBought"
-  ): TypedContractEvent<
-    TicketBoughtEvent.InputTuple,
-    TicketBoughtEvent.OutputTuple,
-    TicketBoughtEvent.OutputObject
-  >;
-  getEvent(
     key: "TicketCreated"
   ): TypedContractEvent<
     TicketCreatedEvent.InputTuple,
     TicketCreatedEvent.OutputTuple,
     TicketCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TicketPurchased"
+  ): TypedContractEvent<
+    TicketPurchasedEvent.InputTuple,
+    TicketPurchasedEvent.OutputTuple,
+    TicketPurchasedEvent.OutputObject
   >;
 
   filters: {
@@ -497,18 +617,7 @@ export interface TicketSale extends BaseContract {
       OfferMadeEvent.OutputObject
     >;
 
-    "TicketBought(uint256,address,uint256)": TypedContractEvent<
-      TicketBoughtEvent.InputTuple,
-      TicketBoughtEvent.OutputTuple,
-      TicketBoughtEvent.OutputObject
-    >;
-    TicketBought: TypedContractEvent<
-      TicketBoughtEvent.InputTuple,
-      TicketBoughtEvent.OutputTuple,
-      TicketBoughtEvent.OutputObject
-    >;
-
-    "TicketCreated(uint256,string,string,uint256,uint256,bool,address)": TypedContractEvent<
+    "TicketCreated(uint256,address,string,uint256,uint256,bool)": TypedContractEvent<
       TicketCreatedEvent.InputTuple,
       TicketCreatedEvent.OutputTuple,
       TicketCreatedEvent.OutputObject
@@ -517,6 +626,17 @@ export interface TicketSale extends BaseContract {
       TicketCreatedEvent.InputTuple,
       TicketCreatedEvent.OutputTuple,
       TicketCreatedEvent.OutputObject
+    >;
+
+    "TicketPurchased(uint256,address,uint256,string,string,string)": TypedContractEvent<
+      TicketPurchasedEvent.InputTuple,
+      TicketPurchasedEvent.OutputTuple,
+      TicketPurchasedEvent.OutputObject
+    >;
+    TicketPurchased: TypedContractEvent<
+      TicketPurchasedEvent.InputTuple,
+      TicketPurchasedEvent.OutputTuple,
+      TicketPurchasedEvent.OutputObject
     >;
   };
 }

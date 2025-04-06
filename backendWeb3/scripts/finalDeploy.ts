@@ -43,6 +43,6 @@ main().catch((error) => {
 
 
 
-// Current gas price: 100000000000
+// Current gas price: 50000000000
 // Deploying TicketSale contract...
-// TicketSale contract deployed at: 0xA021E81B42A3e890f1B0d5431B6D6CD412993457
+// TicketSale contract deployed at: 0xf1C0fd4952c2470A76Db601f9c53Ed277ba230BE
