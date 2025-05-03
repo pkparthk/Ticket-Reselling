@@ -1,9 +1,9 @@
 "use client";
 
 import { createConfig, http } from "@wagmi/core";
-import { polygonAmoy } from "@wagmi/core/chains";
+import { polygonAmoy, sepolia } from "@wagmi/core/chains";
 import { walletConnect } from "@wagmi/connectors";
-import { WagmiConfig } from "wagmi";
+import { WagmiProvider } from "wagmi";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -11,15 +11,31 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const projectId = "7211f5878c247425f4d7edc40df85995";
 
 // ✅ Create Wagmi Config
+// export const config = createConfig({
+//   chains: [polygonAmoy],
+//   connectors: [
+//     walletConnect({
+//       projectId: projectId,
+//       showQrModal : true,
+//     }),
+//   ],
+//   transports: {
+//     [polygonAmoy.id]: http(),
+//   },
+// });
+
 export const config = createConfig({
-  chains: [polygonAmoy],
+  chains: [sepolia], // Changed to Sepolia
   connectors: [
     walletConnect({
       projectId: projectId,
+      showQrModal: true,
     }),
   ],
   transports: {
-    [polygonAmoy.id]: http(),
+    [sepolia.id]: http(
+      "https://sepolia.infura.io/v3/44d9231816f147c9813d4d11b579abed"
+    ), // Ensure correct Sepolia transport
   },
 });
 
@@ -32,12 +48,10 @@ export function WagmiProviderWrapper({
   const queryClient = new QueryClient(); // ✅ Create inside component
 
   return (
-    <WagmiConfig config={config}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider chains={[polygonAmoy]}>
-          {children}
-        </RainbowKitProvider>
+        <RainbowKitProvider>{children}</RainbowKitProvider>
       </QueryClientProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   );
 }
