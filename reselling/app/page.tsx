@@ -1,20 +1,16 @@
-import Link from "next/link";
+import Image from "next/image";
+import HeroSection from "./components/HeroSection";
+import About from "./components/About";
+import CTA from "./components/cta";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center">
-      <h1 className="text-4xl font-bold">
-        Welcome to the Ticket Reselling App
-      </h1>
-      <p className="text-xl mt-4">Buy and Sell Tickets using Web3</p>
-      <div className="mt-8">
-        <Link
-          href="/listings"
-          className="bg-blue-500 text-white py-2 px-4 rounded-md"
-        >
-          View Listings
-        </Link>
-      </div>
+    <div className="flex min-h-screen flex-col items-center">
+      <HeroSection />
+      <main className="md:w-[720px] lg:w-[860px] xl:w-[920px] 2xl:w-[1200px]">
+        <About />
+        <CTA />
+      </main>
     </div>
   );
 }
