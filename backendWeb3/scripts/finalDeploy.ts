@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+const { ethers } = require("hardhat");
 import dotenv from "dotenv";
 
 dotenv.config();
