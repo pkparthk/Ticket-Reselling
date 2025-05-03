@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+const { ethers } = require("hardhat");
 import { expect } from "chai";
 
 describe("TicketSale Contract", function () {

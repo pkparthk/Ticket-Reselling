@@ -1,17 +1,39 @@
-require("@nomicfoundation/hardhat-toolbox");
+require("@nomiclabs/hardhat-waffle");
 require("dotenv").config();
 
-/** @type import('hardhat/config').HardhatUserConfig */
-
-const AMOY_URL = process.env.AMOY_URL;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-
 module.exports = {
-  solidity: "0.8.27",
-  networks: {
-    polygon: {
-      url: AMOY_URL,
-      accounts: [PRIVATE_KEY], // Ensure that this is properly set in .env
+  solidity: {
+    version: "0.8.17",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
     },
+  },
+  networks: {
+    hardhat: {
+      chainId: 1337,
+      mining: {
+        auto: true,
+        interval: 0,
+      },
+    },
+    sepolia: {
+      url: process.env.INFURA_URL,
+      accounts: [process.env.PRIVATE_KEY],
+      chainId: 11155111,
+      gasLimit: 8000000,
+      gas: 8000000,
+      allowUnlimitedContractSize: true,
+      timeout: 60000,
+    },
+  },
+  paths: {
+    artifacts: "./artifacts",
+    tests: "./test",
+  },
+  mocha: {
+    timeout: 40000,
   },
 };

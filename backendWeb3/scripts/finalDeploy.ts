@@ -25,6 +25,7 @@ async function main() {
     const TicketSale = await ethers.getContractFactory("TicketSale", wallet);
     const ticketSale = await TicketSale.deploy({
       gasPrice: gasPrice.add(ethers.utils.parseUnits("10", "gwei")), // Add buffer to current gas price
+      gasLimit: 5000000, // Set a manual gas limit
     });
 
     await ticketSale.deployed();
@@ -39,9 +40,6 @@ main().catch((error) => {
   console.error("Error:", error);
   process.exitCode = 1;
 });
-
-
-
 
 // Current gas price: 50000000000
 // Deploying TicketSale contract...
