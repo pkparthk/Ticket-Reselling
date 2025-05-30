@@ -113,13 +113,26 @@ export function UserAuthForm({ className, ...props }) {
         alert("Transaction submitted! Check your wallet for confirmation...");
 
         // Wait for 2 confirmations
-        const receipt = await publicClient.waitForTransactionReceipt({
-          hash: txResult.hash,
-          confirmations: 2,
-        });
+        try {
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash: txResult.hash,
+            confirmations: 2,
+          });
 
-        alert("🎉 Ticket listed successfully!");
-        router.push("/search");
+          if (receipt.status === "success") {
+            alert(
+              "🎉 Ticket listed successfully! You can now search for it on the search page."
+            );k
+            router.push("/search");
+          } else {
+            alert("❌ Ticket listing failed. Please try again.");
+          }
+        } catch (receiptError) {
+          console.error("Error waiting for transaction receipt:", receiptError);
+          alert(
+            "❌ Error: Unable to confirm transaction. Please check your wallet."
+          );
+        }
       }
     } catch (err) {
       console.error("Transaction Error:", err);
