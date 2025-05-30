@@ -25,8 +25,7 @@ interface BuyTicketParams {
 }
 
 // Smart Contract Details
-export const contractAddress: Address =
-  "0xb0C1004C3B7176319AC45b0BaD5FC0BD57c995B1";
+export const contractAddress: Address = process.env.NEXT_CONTRACT_ADDRESS as Address; 
 export const contractABI = contractAbi.abi;
 
 // Create Ticket Hook
@@ -117,6 +116,40 @@ export const useGetBuyerDetails = (ticketId: number) => {
     args: [BigInt(ticketId)],
     query: { enabled: !!ticketId },
   });
+};
+export const useGetAllTicketDetails = () => {
+  const result = useReadContract({
+    address: contractAddress,
+    abi: contractABI,
+    functionName: "getAllTickets",
+  });
+
+  if (!result || !result.data) {
+    console.error("Error fetching tickets: Invalid data or connection.");
+    return { data: [], error: "Invalid data or connection." };
+  }
+
+  const parsedData = Array.isArray(result.data)
+    ? result.data.map((ticket) => ({
+        id: Number(ticket.id),
+        seller: ticket.seller,
+        eventDetails: ticket.eventDetails,
+        location: ticket.location,
+        price: BigInt(ticket.price),
+        ticketsAvailable: Number(ticket.ticketsAvailable),
+        isNegotiable: ticket.isNegotiable,
+        minOffer: BigInt(ticket.minOffer),
+        isSoldOut: ticket.isSoldOut,
+        imageCID: ticket.imageCID,
+        eventLink: ticket.eventLink,
+        sellerEmail: ticket.sellerEmail,
+      }))
+    : [];
+
+  return {
+    ...result,
+    data: parsedData,
+  };
 };
 
 // Conversion utilities
