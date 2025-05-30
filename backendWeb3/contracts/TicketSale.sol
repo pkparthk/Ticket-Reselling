@@ -158,6 +158,18 @@ contract TicketSale is ReentrancyGuard {
         );
     }
 
+    // ✅ Get all ticket details
+function getAllTickets() public view returns (Ticket[] memory) {
+    Ticket[] memory result = new Ticket[](ticketCount);
+    for (uint256 i = 0; i < ticketCount; i++) {
+        result[i] = tickets[i + 1]; // ticket IDs start from 1
+    }
+    return result;
+}
+
+
+
+
     // ✅ Retrieve buyer details
     function getBuyerDetails(uint256 _ticketId) public view returns (
         string memory buyerEmail,
